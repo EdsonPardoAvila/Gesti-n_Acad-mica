@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio | UniSalamanca - Sistema de Gestión Académica{% endblock %}
+
+{% block hero_section %}
+<div class="hero-section text-white">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <div class="badge-institutional mb-4">
+                <i class="bi bi-star-fill"></i>
+                <span>Excelencia académica · Innovación · Calidad</span>
+            </div>
+            <h1 class="hero-title">
+                Sistema de <span class="accent-text">Gestión Académica</span>
+            </h1>
+            <p class="hero-subtitle col-lg-10 px-0">
+                Plataforma integral para la administración de docentes y estudiantes 
+                con generación de reportes y control de asistencia.
+            </p>
+        </div>
+        <div class="col-lg-4 text-center d-none d-lg-block">
+            <i class="bi bi-mortarboard-fill" style="font-size: 120px; opacity: 0.3;"></i>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Estadísticas Rápidas -->
+<div class="row g-4 mb-5">
+    <div class="col-md-6">
+        <div class="stat-card p-4 text-center">
+            <i class="bi bi-person-workspace fs-1 text-primary"></i>
+                            <h3 class="mt-2 mb-0 fw-bold" id="totalDocentes">-</h3>
+            <p class="text-secondary mb-0">Docentes Registrados</p>
+            <a href="{{ url_for('docentes') }}" class="btn btn-sm btn-outline-primary mt-3">
+                Gestionar Docentes <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card p-4 text-center">
+            <i class="bi bi-people-fill fs-1 text-success"></i>
+            <h3 class="mt-2 mb-0 fw-bold" id="totalEstudiantes">-</h3>
+            <p class="text-secondary mb-0">Estudiantes Activos</p>
+            <a href="{{ url_for('estudiantes') }}" class="btn btn-sm btn-outline-primary mt-3">
+                Gestionar Estudiantes <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Accesos Rápidos -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-download"></i> Acciones Rápidas - Docentes
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/api/docentes/plantilla" class="btn btn-outline-primary">
+                        <i class="bi bi-file-excel"></i> Descargar Plantilla Docentes
+                    </a>
+                    <button class="btn btn-outline-success" onclick="window.location.href='/api/docentes/reporte'">
+                        <i class="bi bi-printer"></i> Generar Reporte de Docentes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-download"></i> Acciones Rápidas - Estudiantes
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/api/estudiantes/plantilla" class="btn btn-outline-primary">
+                        <i class="bi bi-file-excel"></i> Descargar Plantilla Estudiantes
+                    </a>
+                    <button class="btn btn-outline-success" onclick="window.location.href='/api/estudiantes/reporte'">
+                        <i class="bi bi-printer"></i> Generar Reporte de Estudiantes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function cargarEstadisticas() {
+    try {
+        const [docentesRes, estudiantesRes] = await Promise.all([
+            fetch('/api/docentes'),
+            fetch('/api/estudiantes')
+        ]);
+        
+        const docentes = await docentesRes.json();
+        const estudiantes = await estudiantesRes.json();
+        
+        document.getElementById('totalDocentes').textContent = docentes.total || 0;
+        document.getElementById('totalEstudiantes').textContent = estudiantes.total || 0;
+    } catch (error) {
+        console.error('Error cargando estadísticas:', error);
+    }
+}
+
+cargarEstadisticas();
+</script>
+{% endblock %}

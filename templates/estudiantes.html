@@ -1,0 +1,640 @@
+{% extends "base.html" %}
+
+{% block title %}Estudiantes | UniSalamanca - Gestión Académica{% endblock %}
+
+{% block hero_section %}
+<div class="hero-section text-white">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <h1 class="hero-title">
+                Gestión de <span class="accent-text">Estudiantes</span>
+            </h1>
+            <p class="hero-subtitle">
+                Administre la base de datos estudiantil, control de asistencia, seguimiento de procesos y generación de reportes.
+            </p>
+        </div>
+        <div class="col-lg-4 text-center d-none d-lg-block">
+            <i class="bi bi-people-fill" style="font-size: 100px; opacity: 0.3;"></i>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-cloud-upload"></i>
+                Carga de Datos de Estudiantes
+                <button class="btn btn-sm btn-outline-primary float-end" data-bs-toggle="modal" data-bs-target="#plantillaModal">
+                    <i class="bi bi-download"></i> Descargar Plantilla
+                </button>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <input type="file" class="form-control" id="fileInput" name="file" accept=".csv,.xlsx,.xls" required>
+                            <small class="text-secondary">Formatos permitidos: CSV, Excel (.xlsx, .xls)</small>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-upload"></i> Cargar Archivo
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <div id="uploadResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-table"></i>
+                Listado de Estudiantes
+                <button class="btn btn-sm btn-success float-end" id="downloadReportBtn">
+                    <i class="bi bi-file-excel"></i> Descargar Reporte
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Filtros -->
+                <div class="row mb-3 g-2">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o documento...">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="programaFilter">
+                            <option value="">Todos los programas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="estadoFilter">
+                            <option value="">Todos los estados</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="En Proceso">En Proceso</option>
+                            <option value="Completado">Completado</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="dependenciaFilter">
+                            <option value="">Todas las dependencias</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100" id="clearFiltersBtn">
+                            <i class="bi bi-eraser"></i> Limpiar filtros
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover" id="estudiantesTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Documento</th>
+                                <th>Programa</th>
+                                <th>Teléfono</th>
+                                <th>Dependencia</th>
+                                <th>Acción</th>
+                                <th>Estado</th>
+                                <th>Evidencia</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="estudiantesTableBody">
+                            <tr>
+                                <td colspan="10" class="text-center">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p>Cargando estudiantes...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Estudiante -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Editar Estudiante</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre Estudiante *</label>
+                            <input type="text" class="form-control" id="editNombre" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Número Documento *</label>
+                            <input type="text" class="form-control" id="editDocumento" required 
+                                   readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                            <small class="text-secondary"><i class="bi bi-info-circle"></i> El número de documento no se puede modificar</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Programa</label>
+                            <input type="text" class="form-control" id="editPrograma">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="editTelefono" placeholder="Ej: 3001234567">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Correo Personal</label>
+                            <input type="email" class="form-control" id="editCorreoPersonal">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Correo Institucional</label>
+                            <input type="email" class="form-control" id="editCorreoInstitucional">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Dependencia (Área encargada)</label>
+                            <select class="form-select" id="editDependencia">
+                                <option value="">Seleccionar...</option>
+                                <option value="Bienestar Universitario">Bienestar Universitario</option>
+                                <option value="Registro Académico">Registro Académico</option>
+                                <option value="Admisiones">Admisiones</option>
+                                <option value="Financiera">Financiera</option>
+                                <option value="Biblioteca">Biblioteca</option>
+                                <option value="Secretaría General">Secretaría General</option>
+                                <option value="Decanatura">Decanatura</option>
+                                <option value="Coordinación Académica">Coordinación Académica</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Acción a realizar</label>
+                            <input type="text" class="form-control" id="editAccion" 
+                                   placeholder="Ej: Asesoría académica, Trámite de grado, Revisión de documentos...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Estado del proceso</label>
+                            <select class="form-select" id="editEstado">
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En Proceso">En Proceso</option>
+                                <option value="Completado">Completado</option>
+                                <option value="Cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Asistencia</label>
+                            <select class="form-select" id="editAsistencia">
+                                <option value="">Seleccionar...</option>
+                                <option value="Presente">Presente</option>
+                                <option value="Ausente">Ausente</option>
+                                <option value="Justificado">Justificado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Evidencia (Soporte del proceso)</label>
+                            <input type="text" class="form-control" id="editEvidencia" placeholder="Ej: Formulario_adjunto.pdf, Acta_001.docx">
+                            <small class="text-secondary">Nombre del documento o link de evidencia</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="editObservaciones" rows="3" placeholder="Detalles adicionales del proceso..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveEditBtn">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver/Actualizar Estado -->
+<div class="modal fade" id="estadoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> Actualizar Estado del Proceso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="estadoId">
+                <div class="mb-3">
+                    <label class="form-label">Estado</label>
+                    <select class="form-select" id="modalEstado">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En Proceso">En Proceso</option>
+                        <option value="Completado">Completado</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Acción realizada</label>
+                    <input type="text" class="form-control" id="modalAccion" placeholder="Describa la acción realizada">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Evidencia</label>
+                    <input type="text" class="form-control" id="modalEvidencia" placeholder="Nombre del documento o link">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info text-white" id="saveEstadoBtn">Actualizar Estado</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Plantilla -->
+<div class="modal fade" id="plantillaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-download"></i> Descargar Plantilla</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Descargue la plantilla de Excel para cargar datos de estudiantes.</p>
+                <p><strong>Columnas incluidas:</strong></p>
+                <ul>
+                    <li>Nombre Estudiante</li>
+                    <li>N. Documento</li>
+                    <li>Programa</li>
+                    <li>Correo Personal</li>
+                    <li>Correo Institucional</li>
+                    <li>Teléfono</li>
+                    <li>Dependencia (Área encargada)</li>
+                    <li>Acción</li>
+                    <li>Estado</li>
+                    <li>Evidencia</li>
+                    <li>Asistencia</li>
+                    <li>Observaciones</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="/api/estudiantes/plantilla" class="btn btn-primary">
+                    <i class="bi bi-download"></i> Descargar Plantilla
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmación Eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar este estudiante?</p>
+                <p><strong>Esta acción no se puede deshacer.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let estudiantesData = [];
+let deleteId = null;
+
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    const file = document.getElementById('fileInput').files[0];
+    formData.append('file', file);
+    
+    const resultDiv = document.getElementById('uploadResult');
+    resultDiv.innerHTML = '<div class="alert alert-info">Procesando archivo...</div>';
+    
+    try {
+        const response = await fetch('/api/estudiantes/cargar', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+            document.getElementById('fileInput').value = '';
+            cargarEstudiantes();
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+});
+
+async function cargarEstudiantes() {
+    try {
+        const response = await fetch('/api/estudiantes');
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+            estudiantesData = data.data;
+            cargarFiltros();
+            mostrarEstudiantes(estudiantesData);
+        } else {
+            mostrarVacio();
+        }
+    } catch (error) {
+        console.error('Error cargando estudiantes:', error);
+        mostrarVacio();
+    }
+}
+
+function getEstadoBadge(estado) {
+    const clases = {
+        'Pendiente': 'bg-warning',
+        'En Proceso': 'bg-info',
+        'Completado': 'bg-success',
+        'Cancelado': 'bg-danger'
+    };
+    return `<span class="badge ${clases[estado] || 'bg-secondary'}">${estado || 'Pendiente'}</span>`;
+}
+
+function mostrarEstudiantes(estudiantes) {
+    const tbody = document.getElementById('estudiantesTableBody');
+    
+    if (estudiantes.length > 0) {
+        tbody.innerHTML = estudiantes.map(est => `
+            <tr>
+                <td>${est.id}</td>
+                <td><strong>${est.nombre_estudiante || '-'}</strong></td>
+                <td>${est.numero_documento || '-'}</td>
+                <td>${est.programa || '-'}</td>
+                <td>${est.telefono || '-'}</td>
+                <td><small>${est.dependencia || '-'}</small></td>
+                <td><small>${est.accion || '-'}</small></td>
+                <td>${getEstadoBadge(est.estado)}</td>
+                <td><small class="text-info">${est.evidencia || '-'}</small></td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-1" onclick="editarEstudiante(${est.id})" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-info me-1" onclick="actualizarEstado(${est.id})" title="Actualizar Estado">
+                        <i class="bi bi-clipboard-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="mostrarEliminar(${est.id})" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } else {
+        mostrarVacio();
+    }
+}
+
+function mostrarVacio() {
+    document.getElementById('estudiantesTableBody').innerHTML = `
+        <tr>
+            <td colspan="10" class="text-center py-4">
+                <i class="bi bi-inbox fs-1 text-secondary"></i>
+                <p class="mt-2">No hay estudiantes registrados</p>
+                <p class="text-secondary small">Cargue un archivo Excel con los datos de estudiantes</p>
+            </td>
+        </tr>
+    `;
+}
+
+function cargarFiltros() {
+    const programas = [...new Set(estudiantesData.map(e => e.programa).filter(p => p))];
+    const programaSelect = document.getElementById('programaFilter');
+    programaSelect.innerHTML = '<option value="">Todos los programas</option>' + 
+        programas.map(p => `<option value="${p}">${p}</option>`).join('');
+    
+    const dependencias = [...new Set(estudiantesData.map(e => e.dependencia).filter(d => d))];
+    const dependenciaSelect = document.getElementById('dependenciaFilter');
+    dependenciaSelect.innerHTML = '<option value="">Todas las dependencias</option>' + 
+        dependencias.map(d => `<option value="${d}">${d}</option>`).join('');
+}
+
+function aplicarFiltros() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const programa = document.getElementById('programaFilter').value;
+    const estado = document.getElementById('estadoFilter').value;
+    const dependencia = document.getElementById('dependenciaFilter').value;
+    
+    let filtrados = estudiantesData;
+    
+    if (search) {
+        filtrados = filtrados.filter(e => 
+            (e.nombre_estudiante && e.nombre_estudiante.toLowerCase().includes(search)) ||
+            (e.numero_documento && e.numero_documento.includes(search))
+        );
+    }
+    
+    if (programa) {
+        filtrados = filtrados.filter(e => e.programa === programa);
+    }
+    
+    if (estado) {
+        filtrados = filtrados.filter(e => e.estado === estado);
+    }
+    
+    if (dependencia) {
+        filtrados = filtrados.filter(e => e.dependencia === dependencia);
+    }
+    
+    mostrarEstudiantes(filtrados);
+}
+
+document.getElementById('searchInput').addEventListener('input', aplicarFiltros);
+document.getElementById('programaFilter').addEventListener('change', aplicarFiltros);
+document.getElementById('estadoFilter').addEventListener('change', aplicarFiltros);
+document.getElementById('dependenciaFilter').addEventListener('change', aplicarFiltros);
+document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('programaFilter').value = '';
+    document.getElementById('estadoFilter').value = '';
+    document.getElementById('dependenciaFilter').value = '';
+    mostrarEstudiantes(estudiantesData);
+});
+
+function editarEstudiante(id) {
+    const estudiante = estudiantesData.find(e => e.id === id);
+    
+    if (!estudiante) {
+        mostrarAlerta('Error: No se encontraron datos del estudiante', 'danger');
+        return;
+    }
+    
+    document.getElementById('editId').value = estudiante.id;
+    document.getElementById('editNombre').value = estudiante.nombre_estudiante || '';
+    document.getElementById('editDocumento').value = estudiante.numero_documento || '';
+    document.getElementById('editPrograma').value = estudiante.programa || '';
+    document.getElementById('editTelefono').value = estudiante.telefono || '';
+    document.getElementById('editCorreoPersonal').value = estudiante.correo_personal || '';
+    document.getElementById('editCorreoInstitucional').value = estudiante.correo_institucional || '';
+    document.getElementById('editDependencia').value = estudiante.dependencia || '';
+    document.getElementById('editAccion').value = estudiante.accion || '';
+    document.getElementById('editEstado').value = estudiante.estado || 'Pendiente';
+    document.getElementById('editEvidencia').value = estudiante.evidencia || '';
+    document.getElementById('editAsistencia').value = estudiante.asistencia || '';
+    document.getElementById('editObservaciones').value = estudiante.observaciones || '';
+    
+    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    editModal.show();
+}
+
+document.getElementById('saveEditBtn').addEventListener('click', async () => {
+    const id = document.getElementById('editId').value;
+    
+    if (!id) {
+        mostrarAlerta('Error: No se pudo identificar el estudiante', 'danger');
+        return;
+    }
+    
+    if (!confirm('¿Está seguro de guardar los cambios?')) return;
+    
+    const data = {
+        nombre_estudiante: document.getElementById('editNombre').value,
+        numero_documento: document.getElementById('editDocumento').value,
+        programa: document.getElementById('editPrograma').value,
+        telefono: document.getElementById('editTelefono').value,
+        correo_personal: document.getElementById('editCorreoPersonal').value,
+        correo_institucional: document.getElementById('editCorreoInstitucional').value,
+        dependencia: document.getElementById('editDependencia').value,
+        accion: document.getElementById('editAccion').value,
+        estado: document.getElementById('editEstado').value,
+        evidencia: document.getElementById('editEvidencia').value,
+        asistencia: document.getElementById('editAsistencia').value,
+        observaciones: document.getElementById('editObservaciones').value
+    };
+    
+    const saveBtn = document.getElementById('saveEditBtn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+    
+    try {
+        const response = await fetch(`/api/estudiantes/${id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            cargarEstudiantes();
+            mostrarAlerta('Estudiante actualizado exitosamente', 'success');
+        } else {
+            mostrarAlerta(result.message, 'danger');
+        }
+    } catch (error) {
+        mostrarAlerta('Error al actualizar: ' + error.message, 'danger');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+    }
+});
+
+function actualizarEstado(id) {
+    const estudiante = estudiantesData.find(e => e.id === id);
+    if (!estudiante) return;
+    
+    document.getElementById('estadoId').value = id;
+    document.getElementById('modalEstado').value = estudiante.estado || 'Pendiente';
+    document.getElementById('modalAccion').value = estudiante.accion || '';
+    document.getElementById('modalEvidencia').value = estudiante.evidencia || '';
+    
+    const estadoModal = new bootstrap.Modal(document.getElementById('estadoModal'));
+    estadoModal.show();
+}
+
+document.getElementById('saveEstadoBtn').addEventListener('click', async () => {
+    const id = document.getElementById('estadoId').value;
+    const data = {
+        estado: document.getElementById('modalEstado').value,
+        accion: document.getElementById('modalAccion').value,
+        evidencia: document.getElementById('modalEvidencia').value
+    };
+    
+    try {
+        const response = await fetch(`/api/estudiantes/actualizar-estado/${id}`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('estadoModal')).hide();
+            cargarEstudiantes();
+            mostrarAlerta('Estado actualizado exitosamente', 'success');
+        } else {
+            mostrarAlerta(result.message, 'danger');
+        }
+    } catch (error) {
+        mostrarAlerta('Error al actualizar estado', 'danger');
+    }
+});
+
+function mostrarEliminar(id) {
+    deleteId = id;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+    if (!deleteId) return;
+    
+    try {
+        const response = await fetch(`/api/estudiantes/eliminar/${deleteId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+            cargarEstudiantes();
+            mostrarAlerta('Estudiante eliminado exitosamente', 'success');
+        } else {
+            mostrarAlerta(data.message, 'danger');
+        }
+    } catch (error) {
+        mostrarAlerta('Error al eliminar', 'danger');
+    }
+});
+
+document.getElementById('downloadReportBtn').addEventListener('click', () => {
+    window.location.href = '/api/estudiantes/reporte';
+});
+
+function mostrarAlerta(mensaje, tipo) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    const container = document.querySelector('.card-body');
+    container.insertBefore(alertDiv, document.querySelector('#estudiantesTable'));
+    setTimeout(() => alertDiv.remove(), 3000);
+}
+
+cargarEstudiantes();
+</script>
+{% endblock %}

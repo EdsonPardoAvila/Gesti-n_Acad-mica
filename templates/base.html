@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>{% block title %}UniSalamanca | Sistema de Gestión Académica{% endblock %}</title>
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- Google Fonts: Inter para tipografía moderna -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+    
+    {% block styles %}{% endblock %}
+    
+    <style>
+        :root {
+            --azul-profundo: #0B2B4A;
+            --azul-corporativo: #1A4B7A;
+            --azul-medio: #2C6E9E;
+            --azul-claro: #EFF7FF;
+            --blanco-puro: #FFFFFF;
+            --gris-claro: #F8FAFE;
+            --texto-principal: #1A2C3E;
+            --shadow-sm: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 20px 25px -12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.25s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(145deg, var(--gris-claro) 0%, #FFFFFF 100%);
+            color: var(--texto-principal);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(95deg, var(--azul-profundo) 0%, var(--azul-corporativo) 100%);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            padding: 0.7rem 0;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+        }
+
+        .navbar-brand .brand-icon {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            padding: 6px;
+        }
+
+        .brand-text .uni-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, #FFFFFF, #CDE9FF);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .brand-text .uni-sub {
+            font-size: 0.7rem;
+            font-weight: 400;
+            opacity: 0.85;
+            color: #E6F0FF;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 0.5rem 1.1rem !important;
+            border-radius: 40px;
+            transition: var(--transition);
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .nav-link i {
+            margin-right: 8px;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white !important;
+        }
+
+        .hero-section {
+            background: linear-gradient(125deg, var(--azul-profundo) 0%, var(--azul-corporativo) 100%);
+            border-radius: 32px;
+            padding: 2.5rem 3rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .hero-title {
+            font-size: 2.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-title .accent-text {
+            color: #FFFFFF;
+            border-bottom: 3px solid #5FAEE3;
+            display: inline-block;
+            padding-bottom: 4px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 0.75rem;
+        }
+
+        .badge-institutional {
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(4px);
+            padding: 0.5rem 1.25rem;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-card {
+            border-radius: 24px;
+            background: white;
+            transition: var(--transition);
+            border: 1px solid #ECF3FA;
+        }
+
+        .stat-card i {
+            color: var(--azul-medio);
+        }
+
+        .card {
+            border: none;
+            border-radius: 24px;
+            background: white;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--blanco-puro);
+            border-bottom: 2px solid var(--azul-claro);
+            color: var(--azul-profundo);
+            font-weight: 700;
+            font-size: 1.25rem;
+            padding: 1rem 1.5rem;
+        }
+
+        .card-header i {
+            color: var(--azul-medio);
+            margin-right: 0.6rem;
+        }
+
+        .btn-primary {
+            background: var(--azul-corporativo);
+            border: none;
+            border-radius: 40px;
+            padding: 0.65rem 1.7rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            background: var(--azul-profundo);
+            transform: scale(1.02);
+        }
+
+        .btn-outline-primary {
+            border: 1.5px solid var(--azul-medio);
+            color: var(--azul-corporativo);
+            border-radius: 40px;
+            font-weight: 500;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--azul-corporativo);
+            border-color: var(--azul-corporativo);
+            color: white;
+        }
+
+        .table thead th {
+            background: var(--azul-corporativo);
+            color: white;
+            font-weight: 600;
+        }
+
+        .badge-soft-blue {
+            background: var(--azul-claro);
+            color: var(--azul-corporativo);
+            padding: 0.3rem 0.9rem;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+
+        .footer {
+            background: var(--azul-profundo);
+            color: #F0F6FF;
+            margin-top: auto;
+        }
+
+        .program-block {
+            background: var(--gris-claro);
+            border-radius: 18px;
+            transition: var(--transition);
+            border-left: 4px solid var(--azul-medio);
+        }
+
+        .program-block:hover {
+            background: white;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.03);
+            transform: translateX(4px);
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 1.7rem;
+            }
+            .hero-section {
+                padding: 1.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <div class="brand-icon">
+                    <i class="bi bi-bank2 fs-3" style="color: white;"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="uni-name">UniSalamanca</span>
+                    <span class="uni-sub">Corporación Universitaria Empresarial de Salamanca</span>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="bi bi-house-door-fill"></i>Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('docentes') }}">
+                            <i class="bi bi-person-workspace"></i>Docentes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('estudiantes') }}">
+                            <i class="bi bi-people-fill"></i>Estudiantes
+                        </a>
+                    </li>
+                    {% block nav_extra %}{% endblock %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mt-md-5">
+        {% block hero_section %}{% endblock %}
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <footer class="footer py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-5">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <i class="bi bi-bank2 fs-2"></i>
+                        <div>
+                            <h5 class="mb-0 fw-bold">UniSalamanca</h5>
+                            <small>Corporación Universitaria Empresarial de Salamanca</small>
+                        </div>
+                    </div>
+                    <p class="text-white-50 small">Formamos líderes con pensamiento crítico y visión global.</p>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-compass"></i> Enlaces rápidos</h6>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2"><a href="{{ url_for('index') }}" class="text-white-50 text-decoration-none">Inicio</a></li>
+                        <li class="mb-2"><a href="{{ url_for('docentes') }}" class="text-white-50 text-decoration-none">Docentes</a></li>
+                        <li class="mb-2"><a href="{{ url_for('estudiantes') }}" class="text-white-50 text-decoration-none">Estudiantes</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-headset"></i> Contacto institucional</h6>
+                    <p class="mb-1 small text-white-50"><i class="bi bi-envelope-fill me-2"></i>contacto@unisalamanca.edu.co</p>
+                    <p class="mb-1 small text-white-50"><i class="bi bi-telephone-fill me-2"></i>+57 (1) 234 5678</p>
+                    <div class="mt-3">
+                        <span class="badge bg-white text-dark bg-opacity-10 p-2 rounded-pill">
+                            <i class="bi bi-c-circle"></i> 2026 Sistema de Gestión Académica
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <hr class="mt-4 opacity-25">
+            <div class="text-center small text-white-50">
+                <i class="bi bi-mortarboard"></i> Todos los derechos reservados
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

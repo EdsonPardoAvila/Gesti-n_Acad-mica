@@ -1,0 +1,564 @@
+{% extends "base.html" %}
+
+{% block title %}Docentes | UniSalamanca - Gestión Académica{% endblock %}
+
+{% block hero_section %}
+<div class="hero-section text-white">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <h1 class="hero-title">
+                Gestión de <span class="accent-text">Docentes</span>
+            </h1>
+            <p class="hero-subtitle">
+                Administre la información de docentes, horarios, asignaturas, seguimiento de procesos y generación de reportes.
+            </p>
+        </div>
+        <div class="col-lg-4 text-center d-none d-lg-block">
+            <i class="bi bi-person-workspace" style="font-size: 100px; opacity: 0.3;"></i>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-cloud-upload"></i>
+                Carga de Datos de Docentes
+                <button class="btn btn-sm btn-outline-primary float-end" data-bs-toggle="modal" data-bs-target="#plantillaModal">
+                    <i class="bi bi-download"></i> Descargar Plantilla
+                </button>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <input type="file" class="form-control" id="fileInput" name="file" accept=".csv,.xlsx,.xls" required>
+                            <small class="text-secondary">Formatos permitidos: CSV, Excel (.xlsx, .xls)</small>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-upload"></i> Cargar Archivo
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <div id="uploadResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-table"></i>
+                Listado de Docentes
+                <button class="btn btn-sm btn-success float-end" id="downloadReportBtn">
+                    <i class="bi bi-file-excel"></i> Descargar Reporte
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Filtros -->
+                <div class="row mb-3 g-2">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o asignatura...">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="estadoFilter">
+                            <option value="">Todos los estados</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="En Proceso">En Proceso</option>
+                            <option value="Completado">Completado</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100" id="clearFiltersBtn">
+                            <i class="bi bi-eraser"></i> Limpiar filtros
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover" id="docentesTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre Docente</th>
+                                <th>Asignatura</th>
+                                <th>Código</th>
+                                <th>Día</th>
+                                <th>Horario</th>
+                                <th>Dependencia</th>
+                                <th>Acción</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="docentesTableBody">
+                            <tr>
+                                <td colspan="10" class="text-center">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p>Cargando docentes...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Docente -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Editar Docente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre Docente *</label>
+                            <input type="text" class="form-control" id="editNombre" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Asignatura *</label>
+                            <input type="text" class="form-control" id="editAsignatura" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Código *</label>
+                            <input type="text" class="form-control" id="editCodigo" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Día Semana *</label>
+                            <select class="form-select" id="editDiaSemana">
+                                <option value="Lunes">Lunes</option>
+                                <option value="Martes">Martes</option>
+                                <option value="Miércoles">Miércoles</option>
+                                <option value="Jueves">Jueves</option>
+                                <option value="Viernes">Viernes</option>
+                                <option value="Sábado">Sábado</option>
+                                <option value="Domingo">Domingo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Horario Inicio *</label>
+                            <input type="time" class="form-control" id="editHorarioInicio" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Horario Fin *</label>
+                            <input type="time" class="form-control" id="editHorarioFin" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha *</label>
+                            <input type="date" class="form-control" id="editFecha" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Link Clase</label>
+                            <input type="url" class="form-control" id="editLinkClase" placeholder="https://...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Duración</label>
+                            <input type="text" class="form-control" id="editDuracion" placeholder="Ej: 2 horas">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Link Grabación</label>
+                            <input type="url" class="form-control" id="editLinkGrabacion" placeholder="https://...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Asistencia Estudiantes</label>
+                            <input type="number" class="form-control" id="editAsistenciaEstudiantes">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Asistencia Reportados</label>
+                            <input type="number" class="form-control" id="editAsistenciaReportados">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Asistencia Docente</label>
+                            <select class="form-select" id="editAsistenciaDocente">
+                                <option value="Presente">Presente</option>
+                                <option value="Ausente">Ausente</option>
+                                <option value="Justificado">Justificado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Dependencia (Área encargada)</label>
+                            <select class="form-select" id="editDependencia">
+                                <option value="">Seleccionar...</option>
+                                <option value="Coordinación Académica">Coordinación Académica</option>
+                                <option value="Decanatura">Decanatura</option>
+                                <option value="Bienestar Universitario">Bienestar Universitario</option>
+                                <option value="Registro Académico">Registro Académico</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Acción a realizar</label>
+                            <input type="text" class="form-control" id="editAccion" placeholder="Ej: Revisión de clase, Entrega de notas...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Estado del proceso</label>
+                            <select class="form-select" id="editEstado">
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En Proceso">En Proceso</option>
+                                <option value="Completado">Completado</option>
+                                <option value="Cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Evidencia</label>
+                            <input type="text" class="form-control" id="editEvidencia" placeholder="Nombre del documento o link">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="editObservaciones" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveEditBtn">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Plantilla -->
+<div class="modal fade" id="plantillaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-download"></i> Descargar Plantilla</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Descargue la plantilla de Excel para cargar datos de docentes.</p>
+                <p><strong>Columnas incluidas:</strong></p>
+                <ul>
+                    <li>Nombre Docente</li>
+                    <li>Asignatura</li>
+                    <li>Código</li>
+                    <li>Día Semana</li>
+                    <li>Horario Inicio</li>
+                    <li>Horario Fin</li>
+                    <li>Link Clase</li>
+                    <li>Fecha</li>
+                    <li>Duración</li>
+                    <li>Link Grabación</li>
+                    <li>Asistencia Estudiantes</li>
+                    <li>Asistencia Reportados</li>
+                    <li>Asistencia Docente</li>
+                    <li>Dependencia</li>
+                    <li>Acción</li>
+                    <li>Estado</li>
+                    <li>Evidencia</li>
+                    <li>Observaciones</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="/api/docentes/plantilla" class="btn btn-primary">
+                    <i class="bi bi-download"></i> Descargar Plantilla
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmación Eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar este registro?</p>
+                <p><strong>Esta acción no se puede deshacer.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let docentesData = [];
+let deleteId = null;
+
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    const file = document.getElementById('fileInput').files[0];
+    formData.append('file', file);
+    
+    const resultDiv = document.getElementById('uploadResult');
+    resultDiv.innerHTML = '<div class="alert alert-info">Procesando archivo...</div>';
+    
+    try {
+        const response = await fetch('/api/docentes/cargar', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+            document.getElementById('fileInput').value = '';
+            cargarDocentes();
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+});
+
+async function cargarDocentes() {
+    try {
+        const response = await fetch('/api/docentes');
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+            docentesData = data.data;
+            mostrarDocentes(docentesData);
+        } else {
+            mostrarVacio();
+        }
+    } catch (error) {
+        console.error('Error cargando docentes:', error);
+        mostrarVacio();
+    }
+}
+
+function getEstadoBadge(estado) {
+    const clases = {
+        'Pendiente': 'bg-warning',
+        'En Proceso': 'bg-info',
+        'Completado': 'bg-success',
+        'Cancelado': 'bg-danger'
+    };
+    return `<span class="badge ${clases[estado] || 'bg-secondary'}">${estado || 'Pendiente'}</span>`;
+}
+
+function mostrarDocentes(docentes) {
+    const tbody = document.getElementById('docentesTableBody');
+    
+    if (docentes.length > 0) {
+        tbody.innerHTML = docentes.map(doc => `
+            <tr>
+                <td>${doc.id}</td>
+                <td><strong>${doc.nombre_docente || '-'}</strong></td>
+                <td>${doc.asignatura || '-'}</td>
+                <td><span class="badge-soft-blue">${doc.codigo || '-'}</span></td>
+                <td>${doc.dia_semana || '-'}</td>
+                <td><small>${doc.horario_inicio || ''} - ${doc.horario_fin || ''}</small></td>
+                <td><small>${doc.dependencia || '-'}</small></td>
+                <td><small>${doc.accion || '-'}</small></td>
+                <td>${getEstadoBadge(doc.estado)}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-1" onclick="editarDocente(${doc.id})" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="mostrarEliminar(${doc.id})" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } else {
+        mostrarVacio();
+    }
+}
+
+function mostrarVacio() {
+    document.getElementById('docentesTableBody').innerHTML = `
+        <tr>
+            <td colspan="10" class="text-center py-4">
+                <i class="bi bi-inbox fs-1 text-secondary"></i>
+                <p class="mt-2">No hay docentes registrados</p>
+                <p class="text-secondary small">Cargue un archivo Excel con los datos de docentes</p>
+            </td>
+        </tr>
+    `;
+}
+
+function aplicarFiltros() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const estado = document.getElementById('estadoFilter').value;
+    
+    let filtrados = docentesData;
+    
+    if (search) {
+        filtrados = filtrados.filter(d => 
+            (d.nombre_docente && d.nombre_docente.toLowerCase().includes(search)) ||
+            (d.asignatura && d.asignatura.toLowerCase().includes(search))
+        );
+    }
+    
+    if (estado) {
+        filtrados = filtrados.filter(d => d.estado === estado);
+    }
+    
+    mostrarDocentes(filtrados);
+}
+
+document.getElementById('searchInput').addEventListener('input', aplicarFiltros);
+document.getElementById('estadoFilter').addEventListener('change', aplicarFiltros);
+document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('estadoFilter').value = '';
+    mostrarDocentes(docentesData);
+});
+
+function editarDocente(id) {
+    const docente = docentesData.find(d => d.id === id);
+    
+    if (!docente) {
+        mostrarAlerta('Error: No se encontraron datos del docente', 'danger');
+        return;
+    }
+    
+    document.getElementById('editId').value = docente.id;
+    document.getElementById('editNombre').value = docente.nombre_docente || '';
+    document.getElementById('editAsignatura').value = docente.asignatura || '';
+    document.getElementById('editCodigo').value = docente.codigo || '';
+    document.getElementById('editDiaSemana').value = docente.dia_semana || 'Lunes';
+    document.getElementById('editHorarioInicio').value = docente.horario_inicio || '';
+    document.getElementById('editHorarioFin').value = docente.horario_fin || '';
+    document.getElementById('editFecha').value = docente.fecha || '';
+    document.getElementById('editLinkClase').value = docente.link_clase || '';
+    document.getElementById('editDuracion').value = docente.duracion || '';
+    document.getElementById('editLinkGrabacion').value = docente.link_grabacion || '';
+    document.getElementById('editAsistenciaEstudiantes').value = docente.asistencia_estudiantes || 0;
+    document.getElementById('editAsistenciaReportados').value = docente.asistencia_reportados || 0;
+    document.getElementById('editAsistenciaDocente').value = docente.asistencia_docente || 'Presente';
+    document.getElementById('editDependencia').value = docente.dependencia || '';
+    document.getElementById('editAccion').value = docente.accion || '';
+    document.getElementById('editEstado').value = docente.estado || 'Pendiente';
+    document.getElementById('editEvidencia').value = docente.evidencia || '';
+    document.getElementById('editObservaciones').value = docente.observaciones || '';
+    
+    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    editModal.show();
+}
+
+document.getElementById('saveEditBtn').addEventListener('click', async () => {
+    const id = document.getElementById('editId').value;
+    
+    if (!id) {
+        mostrarAlerta('Error: No se pudo identificar el docente', 'danger');
+        return;
+    }
+    
+    if (!confirm('¿Está seguro de guardar los cambios?')) return;
+    
+    const data = {
+        nombre_docente: document.getElementById('editNombre').value,
+        asignatura: document.getElementById('editAsignatura').value,
+        codigo: document.getElementById('editCodigo').value,
+        dia_semana: document.getElementById('editDiaSemana').value,
+        horario_inicio: document.getElementById('editHorarioInicio').value,
+        horario_fin: document.getElementById('editHorarioFin').value,
+        fecha: document.getElementById('editFecha').value,
+        link_clase: document.getElementById('editLinkClase').value,
+        duracion: document.getElementById('editDuracion').value,
+        link_grabacion: document.getElementById('editLinkGrabacion').value,
+        asistencia_estudiantes: parseInt(document.getElementById('editAsistenciaEstudiantes').value) || 0,
+        asistencia_reportados: parseInt(document.getElementById('editAsistenciaReportados').value) || 0,
+        asistencia_docente: document.getElementById('editAsistenciaDocente').value,
+        dependencia: document.getElementById('editDependencia').value,
+        accion: document.getElementById('editAccion').value,
+        estado: document.getElementById('editEstado').value,
+        evidencia: document.getElementById('editEvidencia').value,
+        observaciones: document.getElementById('editObservaciones').value
+    };
+    
+    const saveBtn = document.getElementById('saveEditBtn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+    
+    try {
+        const response = await fetch(`/api/docentes/${id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            cargarDocentes();
+            mostrarAlerta('Docente actualizado exitosamente', 'success');
+        } else {
+            mostrarAlerta(result.message, 'danger');
+        }
+    } catch (error) {
+        mostrarAlerta('Error al actualizar: ' + error.message, 'danger');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+    }
+});
+
+function mostrarEliminar(id) {
+    deleteId = id;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+    if (!deleteId) return;
+    
+    try {
+        const response = await fetch(`/api/docentes/eliminar/${deleteId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+            cargarDocentes();
+            mostrarAlerta('Registro eliminado exitosamente', 'success');
+        } else {
+            mostrarAlerta(data.message, 'danger');
+        }
+    } catch (error) {
+        mostrarAlerta('Error al eliminar', 'danger');
+    }
+});
+
+document.getElementById('downloadReportBtn').addEventListener('click', () => {
+    window.location.href = '/api/docentes/reporte';
+});
+
+function mostrarAlerta(mensaje, tipo) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    const container = document.querySelector('.card-body');
+    container.insertBefore(alertDiv, document.querySelector('#docentesTable'));
+    setTimeout(() => alertDiv.remove(), 3000);
+}
+
+cargarDocentes();
+</script>
+{% endblock %}
